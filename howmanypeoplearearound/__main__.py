@@ -65,26 +65,24 @@ def fileToMacSet(path):
 @click.option('--number', help='just print the number', is_flag=True)
 @click.option('-j', '--jsonprint', help='print JSON of cellphone data', is_flag=True)
 @click.option('-n', '--nearby', help='only quantify signals that are nearby (rssi > -70)', is_flag=True)
-@click.option('--allmacaddresses', help='do not check MAC addresses against the OUI database to only recognize known cellphone manufacturers', is_flag=True)  # noqa
-@click.option('--nocorrection', help='do not apply correction', is_flag=True)
 @click.option('--loop', help='loop forever', is_flag=True)
 @click.option('--port', default=8001, help='port to use when serving analysis')
 @click.option('--sort', help='sort cellphone data by distance (rssi)', is_flag=True)
 @click.option('--targetmacs', help='read a file that contains target MAC addresses', default='')
-def main(adapter, scantime, verbose, number, nearby, jsonprint, out, allmacaddresses, nocorrection, loop, analyze, port, sort, targetmacs):
+def main(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, analyze, port, sort, targetmacs):
     if analyze != '':
         analyze_file(analyze, port)
         return
     if loop:
         while True:
             adapter = scan(adapter, scantime, verbose, number,
-                 nearby, jsonprint, out, allmacaddresses, nocorrection, loop, sort, targetmacs)
+                 nearby, jsonprint, out, loop, sort, targetmacs)
     else:
         scan(adapter, scantime, verbose, number,
-             nearby, jsonprint, out, allmacaddresses, nocorrection, loop, sort, targetmacs)
+             nearby, jsonprint, out, loop, sort, targetmacs)
 
 
-def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, allmacaddresses, nocorrection, loop, sort, targetmacs):
+def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, sort, targetmacs):
     """Monitor wifi signals to count the number of people around you"""
 
     # print("OS: " + os.name)
@@ -213,22 +211,16 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, allmacaddre
         if mac[:8] in oui:
             oui_id = oui[mac[:8]]
         if verbose:
-            print(mac, oui_id, oui_id in cellphone)
-        if allmacaddresses or oui_id in cellphone:
-            if not nearby or (nearby and foundMacs[mac] > -70):
-                cellphone_people.append(
-                    {'company': oui_id, 'rssi': foundMacs[mac], 'mac': mac})
+            print(mac, oui_id)
+        if not nearby or (nearby and foundMacs[mac] > -70):
+            cellphone_people.append(
+                {'Manufacturer': oui_id, 'rssi': foundMacs[mac], 'mac': mac})
     if sort:
         cellphone_people.sort(key=lambda x: x['rssi'], reverse=True)
     if verbose:
         print(json.dumps(cellphone_people, indent=2))
 
-    # US / Canada: https://twitter.com/conradhackett/status/701798230619590656
-    percentage_of_people_with_phones = 0.7
-    if nocorrection:
-        percentage_of_people_with_phones = 1
-    num_people = int(round(len(cellphone_people) /
-                           percentage_of_people_with_phones))
+    num_people = len(cellphone_people)
 
     if number and not jsonprint:
         print(num_people)
