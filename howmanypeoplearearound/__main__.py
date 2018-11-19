@@ -52,9 +52,12 @@ def showTimer(timeleft):
     print("")
 
 def fileToMacSet(path):
+    dictionary = {}
     with open(path, 'r') as f:
         maclist = f.readlines()
-    return set([x.strip() for x in maclist])
+        for line in maclist:
+	    dictionary[line.split(',')[0]] = line.split(',')[1]
+    return dictionary
 
 @click.command()
 @click.option('-a', '--adapter', default='', help='adapter to use')
@@ -149,7 +152,7 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, sort,
     output, nothing = run_tshark.communicate()
 
     # read target MAC address
-    targetmacset = set()
+    targetmacset = {}
     if targetmacs != '':
         targetmacset = fileToMacSet(targetmacs)
 
@@ -182,11 +185,13 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, sort,
 
     # Find target MAC address in foundMacs
     if targetmacset:
+	print("parsing macs")
         sys.stdout.write(RED)
         for mac in foundMacs:
-            if mac in targetmacset:
-                print("Found MAC address: %s" % mac)
-                print("rssi: %s" % str(foundMacs[mac]))
+            for macaddr, name in targetmacset.items():
+		if macaddr == mac:
+                	print("Found MAC address: {macaddr} aka {name}".format(macaddr=macaddr, name=name))
+                	print("rssi: %s" % str(foundMacs[mac]))
         sys.stdout.write(RESET)
 
     cellphone_people = []
