@@ -63,7 +63,7 @@ def fileToMacSet(path):
 @click.option('-a', '--adapter', default='', help='adapter to use')
 @click.option('-z', '--analyze', default='', help='analyze file')
 @click.option('-s', '--scantime', default='60', help='time in seconds to scan')
-@click.option('-o', '--out', default='', help='output cellphone data to file')
+@click.option('-o', '--out', default='', help='output cellphone data to (unique) file')
 @click.option('-v', '--verbose', help='verbose mode', is_flag=True)
 @click.option('--number', help='just print the number', is_flag=True)
 @click.option('-j', '--jsonprint', help='print JSON of cellphone data', is_flag=True)
