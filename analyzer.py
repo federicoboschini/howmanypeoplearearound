@@ -1,9 +1,27 @@
 import copy
 import datetime
+import getopt
 import json
 import sys
 
-from howmanypeoplearearound.plotlyjs import *
+def main(argv):
+    fname = ''
+    port = 8081
+    try:
+        opts, args = getopt.getopt(argv, "hf:p:",["filename=","port="])
+    except getopt.GetoptError:
+        print 'analyzer.py -f <filename> -p <port>'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'analyzer.py -f <filename> -p <port>'
+            sys.exit()
+        elif opt in ("-f", "--filename"):
+            fname = arg
+        elif opt in ("-p", "--port"):
+            port = int(arg)
+
+    analyze_file(fname, port)
 
 
 def analyze_file(fname, port):
@@ -118,16 +136,36 @@ var layout2 = {
         </script>
     </body></html>""" % (js))
     print("Wrote index.html")
-    print("Open browser to http://localhost:" + str(port))
-    print("Type Ctl+C to exit")
     if sys.version_info >= (3, 0):
         # Python 3 code in this block
         from http.server import HTTPServer, SimpleHTTPRequestHandler
-        httpd = HTTPServer(('localhost', port), SimpleHTTPRequestHandler)
+        try:
+            httpd = HTTPServer(('localhost', port), SimpleHTTPRequestHandler)
+        except:
+            print "Address already in use. Try selecting a different port by: -p <port>"
+            sys.exit(1)
+        print("Open browser to http://localhost:" + str(port))
+        print("Type Ctl+C to exit")
         httpd.serve_forever()
     else:
         # Python 2 code in this block
         import SimpleHTTPServer
         import SocketServer
-        httpd = SocketServer.TCPServer(("", port), SimpleHTTPServer.SimpleHTTPRequestHandler)
+        try:
+            httpd = SocketServer.TCPServer(("", port), SimpleHTTPServer.SimpleHTTPRequestHandler)
+        except:
+            print "Address already in use. Try selecting a different port by: -p <port>"
+            sys.exit(1)
+        print("Open browser to http://localhost:" + str(port))
+        print("Type Ctl+C to exit")
         httpd.serve_forever()
+
+if __name__ == "__main__":
+    try:
+        main(sys.argv[1:])
+    except KeyboardInterrupt:
+        print "\nKilled!"
+        sys.exit()
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+        sys.exit(1)

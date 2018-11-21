@@ -5,15 +5,16 @@ import platform
 import subprocess
 import json
 import time
-import datetime
 
 import netifaces
-from pick import pick
 import click
 
-from howmanypeoplearearound.oui import *
-from howmanypeoplearearound.analysis import *
+from howmanypeoplearearound.oui import oui
+from howmanypeoplearearound.analysis import analyze_file
+from howmanypeoplearearound.colors import *
 
+if os.name != 'nt':
+    from pick import pick
 
 def which(program):
     """Determines whether program exists
@@ -50,33 +51,42 @@ def showTimer(timeleft):
         time.sleep(0.1)
     print("")
 
+def fileToMacSet(path):
+    dictionary = {}
+    with open(path, 'r') as f:
+        maclist = f.readlines()
+        for line in maclist:
+	    dictionary[line.split(',')[0]] = line.split(',')[1]
+    return dictionary
 
 @click.command()
 @click.option('-a', '--adapter', default='', help='adapter to use')
 @click.option('-z', '--analyze', default='', help='analyze file')
 @click.option('-s', '--scantime', default='60', help='time in seconds to scan')
-@click.option('-o', '--out', default='', help='output cellphone data to file')
+@click.option('-o', '--out', default='', help='output cellphone data to (unique) file')
+@click.option('--outfolder', help='output folder in which files are saved')
 @click.option('-v', '--verbose', help='verbose mode', is_flag=True)
 @click.option('--number', help='just print the number', is_flag=True)
 @click.option('-j', '--jsonprint', help='print JSON of cellphone data', is_flag=True)
 @click.option('-n', '--nearby', help='only quantify signals that are nearby (rssi > -70)', is_flag=True)
-@click.option('--nocorrection', help='do not apply correction', is_flag=True)
 @click.option('--loop', help='loop forever', is_flag=True)
 @click.option('--port', default=8001, help='port to use when serving analysis')
-def main(adapter, scantime, verbose, number, nearby, jsonprint, out, nocorrection, loop, analyze, port):
+@click.option('--sort', help='sort cellphone data by distance (rssi)', is_flag=True)
+@click.option('--targetmacs', help='read a file that contains target MAC addresses', default='')
+def main(adapter, scantime, verbose, number, nearby, jsonprint, out, outfolder, loop, analyze, port, sort, targetmacs):
     if analyze != '':
         analyze_file(analyze, port)
         return
     if loop:
         while True:
-            scan(adapter, scantime, verbose, number,
-                 nearby, jsonprint, out, nocorrection, loop)
+            adapter = scan(adapter, scantime, verbose, number,
+                 nearby, jsonprint, out, outfolder, loop, sort, targetmacs)
     else:
         scan(adapter, scantime, verbose, number,
-             nearby, jsonprint, out, nocorrection, loop)
+             nearby, jsonprint, out, outfolder, loop, sort, targetmacs)
 
 
-def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, nocorrection, loop):
+def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, outfolder, loop, sort, targetmacs):
     """Monitor wifi signals to count the number of people around you"""
 
     # print("OS: " + os.name)
@@ -99,6 +109,11 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, nocorrectio
         verbose = False
 
     if len(adapter) == 0:
+        if os.name == 'nt':
+            print('You must specify the adapter with   -a ADAPTER')
+            print('Choose from the following: ' +
+                  ', '.join(netifaces.interfaces()))
+            return
         title = 'Please choose the adapter you want to use: '
         adapter, index = pick(netifaces.interfaces(), title)
 
@@ -136,65 +151,68 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, nocorrectio
     run_tshark = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output, nothing = run_tshark.communicate()
+
+    # read target MAC address
+    targetmacset = {}
+    if targetmacs != '':
+        targetmacset = fileToMacSet(targetmacs)
+
     foundMacs = {}
     for line in output.decode('utf-8').split('\n'):
         if verbose:
             print(line)
-        if len(line.strip()) == 0:
+        if line.strip() == '':
             continue
-        mac = line.split()[0].strip()
+        mac = line.split()[0].strip().split(',')[0]
         dats = line.split()
         if len(dats) == 3:
             if ':' not in dats[0] or len(dats) != 3:
                 continue
             if mac not in foundMacs:
                 foundMacs[mac] = []
-            rssi = 0
-            rssi = float(dats[2].split(',')[0]) / 2 + \
-                float(dats[2].split(',')[0]) / 2
+            dats_2_split = dats[2].split(',')
+            if len(dats_2_split) > 1:
+                rssi = float(dats_2_split[0]) / 2 + float(dats_2_split[1]) / 2
+            else:
+                rssi = float(dats_2_split[0])
             foundMacs[mac].append(rssi)
 
-    for mac in foundMacs:
-        foundMacs[mac] = float(sum(foundMacs[mac])) / \
-            float(len(foundMacs[mac]))
-
-    if len(foundMacs) == 0:
+    if not foundMacs:
         print("Found no signals, are you sure %s supports monitor mode?" % adapter)
         return
 
-    cellphone = [
-        'Motorola Mobility LLC, a Lenovo Company',
-        'GUANGDONG OPPO MOBILE TELECOMMUNICATIONS CORP.,LTD',
-        'Huawei Symantec Technologies Co.,Ltd.',
-        'Microsoft',
-        'HTC Corporation',
-        'Samsung Electronics Co.,Ltd',
-        'BlackBerry RTS',
-        'LG ELECTRONICS INC',
-        'Apple, Inc.',
-        'LG Electronics',
-        'LG Electronics (Mobile Communications)']
+    for key, value in foundMacs.items():
+        foundMacs[key] = float(sum(value)) / float(len(value))
+
+    # Find target MAC address in foundMacs
+    if targetmacset:
+	print("parsing macs")
+        sys.stdout.write(RED)
+        for mac in foundMacs:
+            for macaddr, name in targetmacset.items():
+		if macaddr == mac:
+                	print("Found MAC address: {macaddr} aka {name}".format(macaddr=macaddr, name=name))
+                	print("rssi: %s" % str(foundMacs[mac]))
+        sys.stdout.write(RESET)
 
     cellphone_people = []
     for mac in foundMacs:
+        oui_id = 'Not in OUI'
         if mac[:8] in oui:
             oui_id = oui[mac[:8]]
-            if verbose:
-                print(mac, oui_id, oui_id in cellphone)
-            if oui_id in cellphone:
-                if not nearby or (nearby and foundMacs[mac] > -70):
-                    cellphone_people.append(
-                        {'company': oui_id, 'rssi': foundMacs[mac], 'mac': mac})
-
+        if verbose:
+            print(mac, oui_id)
+        if not nearby or (nearby and foundMacs[mac] > -70):
+		if targetmacset and mac in targetmacset.keys():
+			cellphone_people.append({'Manufacturer': oui_id, 'rssi': foundMacs[mac], 'mac': mac, 'alias': targetmacset[mac]})
+		else:
+			cellphone_people.append({'Manufacturer': oui_id, 'rssi': foundMacs[mac], 'mac': mac})
+    if sort:
+        cellphone_people.sort(key=lambda x: x['rssi'], reverse=True)
     if verbose:
         print(json.dumps(cellphone_people, indent=2))
 
-    # US / Canada: https://twitter.com/conradhackett/status/701798230619590656
-    percentage_of_people_with_phones = 0.7
-    if nocorrection:
-        percentage_of_people_with_phones = 1
-    num_people = int(round(len(cellphone_people) /
-                           percentage_of_people_with_phones))
+    num_people = len(cellphone_people)
 
     if number and not jsonprint:
         print(num_people)
@@ -208,13 +226,18 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, nocorrectio
         else:
             print("There are about %d people around." % num_people)
 
-    if len(out) > 0:
+    if out:
         with open(out, 'a') as f:
-            data_dump = {'cellphones': cellphone_people, 'time': time.time()}
+            data_dump = {'count': num_people, 'devices': cellphone_people, 'time': time.time()}
             f.write(json.dumps(data_dump) + "\n")
         if verbose:
-            print("Wrote data to %s" % out)
+            print("Wrote %d records to %s" % (len(cellphone_people), out))
+    if outfolder:
+        with open(outfolder+'/'+time.strftime('%Y-%m-%d_%H:%M:%S'), 'w') as f:
+            data_dump = {'count': num_people, 'devices': cellphone_people}
+            f.write(json.dumps(data_dump) + "\n")
     os.remove('/tmp/tshark-temp')
+    return adapter
 
 
 if __name__ == '__main__':
