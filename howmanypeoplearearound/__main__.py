@@ -80,13 +80,13 @@ def main(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, analy
     if loop:
         while True:
             adapter = scan(adapter, scantime, verbose, number,
-                 nearby, jsonprint, out, loop, sort, targetmacs)
+                 nearby, jsonprint, out, outfolder, loop, sort, targetmacs)
     else:
         scan(adapter, scantime, verbose, number,
-             nearby, jsonprint, out, loop, sort, targetmacs)
+             nearby, jsonprint, out, outfolder, loop, sort, targetmacs)
 
 
-def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, sort, targetmacs):
+def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, outfolder, loop, sort, targetmacs):
     """Monitor wifi signals to count the number of people around you"""
 
     # print("OS: " + os.name)
