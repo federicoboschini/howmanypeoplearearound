@@ -232,6 +232,10 @@ def scan(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, sort,
             f.write(json.dumps(data_dump) + "\n")
         if verbose:
             print("Wrote %d records to %s" % (len(cellphone_people), out))
+    if outfolder:
+        with open(outfolder+'/'+time.strftime('%Y-%m-%d_%H:%M:%S'), 'w') as f:
+            data_dump = {'count': num_people, 'devices': cellphone_people}
+            f.write(json.dumps(data_dump) + "\n")
     os.remove('/tmp/tshark-temp')
     return adapter
 
