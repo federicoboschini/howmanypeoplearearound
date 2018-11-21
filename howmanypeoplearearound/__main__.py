@@ -73,7 +73,7 @@ def fileToMacSet(path):
 @click.option('--port', default=8001, help='port to use when serving analysis')
 @click.option('--sort', help='sort cellphone data by distance (rssi)', is_flag=True)
 @click.option('--targetmacs', help='read a file that contains target MAC addresses', default='')
-def main(adapter, scantime, verbose, number, nearby, jsonprint, out, loop, analyze, port, sort, targetmacs):
+def main(adapter, scantime, verbose, number, nearby, jsonprint, out, outfolder, loop, analyze, port, sort, targetmacs):
     if analyze != '':
         analyze_file(analyze, port)
         return
