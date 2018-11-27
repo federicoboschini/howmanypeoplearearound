@@ -126,6 +126,8 @@ def scan(adapter, scantime, maxpower, outfolder):
         print("There are about %d people around." % num_people)
 
     if outfolder:
+        if not(os.path.exists(outfolder)):
+            os.mkdir(outfolder)
         with open(outfolder+'/'+time.strftime('%Y-%m-%d_%H:%M:%S'), 'w') as f:
             data_dump = {'count': num_people, 'devices': cellphone_people}
             f.write(json.dumps(data_dump) + "\n")
