@@ -28,7 +28,8 @@ def main():
         print("\tscan period: {}".format(scan_time))
         print("\tmax tx power: {}".format(max_rssi))
         print("\tcontainer folder: {}".format(folder_name))
-        scan("wlan1", scan_time, max_rssi, folder_name)
+        while True:
+            adapter = scan("wlan1", scan_time, max_rssi, folder_name)
 
 def scan(adapter, scantime, maxpower, outfolder):
     try:
