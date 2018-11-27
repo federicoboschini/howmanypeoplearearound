@@ -12,6 +12,9 @@ import uuid
 
 from oui import oui
 
+if os.name != 'nt':
+    from pick import pick
+
 def main():
     scan_time = 1200
     max_rssi = -70
