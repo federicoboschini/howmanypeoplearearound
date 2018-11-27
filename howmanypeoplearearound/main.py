@@ -26,9 +26,9 @@ def main():
         print("\tscan period: {}".format(scan_time))
         print("\tmax tx power: {}".format(max_rssi))
         print("\tcontainer folder: {}".format(folder_name))
-        scan(scan_time, max_rssi, folder_name)
+        scan("wlan1", scan_time, max_rssi, folder_name)
 
-def scan(scantime, maxpower, outfolder):
+def scan(adapter, scantime, maxpower, outfolder):
     try:
         tshark = which("tshark")
     except:
