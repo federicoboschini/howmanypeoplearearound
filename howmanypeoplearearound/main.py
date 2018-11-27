@@ -19,6 +19,7 @@ def main():
     scan_time = 1200
     max_rssi = -70
     folder_name = str(uuid.uuid4())
+    adapter = "wlan1"
     with open('config.json', 'r') as f:
         config = json.load(f)
         if "scan_time" in config:
@@ -32,7 +33,7 @@ def main():
         print("\tmax tx power: {}".format(max_rssi))
         print("\tcontainer folder: {}".format(folder_name))
         while True:
-            adapter = scan("wlan1", scan_time, max_rssi, folder_name)
+            adapter = scan(adapter, scan_time, max_rssi, folder_name)
 
 def scan(adapter, scantime, maxpower, outfolder):
     try:
