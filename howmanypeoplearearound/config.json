@@ -1,0 +1,11 @@
+{
+    "scan_time": 1200,
+    "max_rssi": -70,
+    "upload_frequency": "",
+    "bucket_name": "federico.sniffer",
+    "compression_type": "gzip",
+    "compress_in_memory": true,
+    "env": "prod",
+    "customer": "bmw",
+    "id": "1234-5678"
+}
