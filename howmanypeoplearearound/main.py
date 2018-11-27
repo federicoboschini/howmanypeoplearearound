@@ -1,7 +1,6 @@
 import getopt
 import json
 import netifaces
-import oui
 import os
 import platform
 import subprocess
@@ -11,7 +10,7 @@ import time
 import traceback
 import uuid
 
-from howmanypeoplearearound.oui import oui
+from oui import oui
 
 def main():
     scan_time = 1200
