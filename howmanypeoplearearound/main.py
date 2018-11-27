@@ -164,4 +164,8 @@ def which(program):
     raise
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "\nKilled!"
+        sys.exit()
