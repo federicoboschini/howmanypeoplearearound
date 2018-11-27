@@ -59,7 +59,7 @@ def scan(adapter, scantime, maxpower, outfolder):
 
     # Scan with tshark
     command = [tshark, '-I', '-i', adapter, '-a',
-               'duration:' + scantime, '-w', '/tmp/tshark-temp']
+               'duration:' + str(scantime), '-w', '/tmp/tshark-temp']
     
     run_tshark = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
