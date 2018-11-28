@@ -44,7 +44,7 @@ def main():
             adapter = scan(adapter, scan_time, max_rssi, folder_name)
 
 def schedule_upload_jobs(upload_frequency, folder_name):
-    cron = CronTab(username="pi")
+    cron = CronTab(user="pi")
     print(os.getcwd())
     #job = cron.new(command="python /home/pi/upload")
 
