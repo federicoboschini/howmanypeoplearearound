@@ -1,4 +1,4 @@
-import crontab import CronTab
+from crontab import CronTab
 import getopt
 import json
 import netifaces
