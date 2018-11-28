@@ -1,4 +1,4 @@
-import cron
+import crontab import CronTab
 import getopt
 import json
 import netifaces
