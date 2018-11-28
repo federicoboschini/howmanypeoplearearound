@@ -1,3 +1,4 @@
+import cron
 import getopt
 import json
 import netifaces
@@ -20,6 +21,7 @@ def main():
     max_rssi = -70
     folder_name = str(uuid.uuid4())
     adapter = "wlan1"
+    upload_frequency = "daily"
     with open('config.json', 'r') as f:
         config = json.load(f)
         if "scan_time" in config:
@@ -28,12 +30,24 @@ def main():
             max_rssi = config["max_rssi"]
         if "id" in config:
             folder_name = config["id"]
+        if "upload_frequency" in config:
+            upload_frequency = config["upload_frequency"]
         print("Config:")
         print("\tscan period: {}".format(scan_time))
         print("\tmax tx power: {}".format(max_rssi))
         print("\tcontainer folder: {}".format(folder_name))
+        print("\tupload frequency: {}".format(upload_frequency))
+
+        schedule_upload_jobs(upload_frequency, folder_name)
+
         while True:
             adapter = scan(adapter, scan_time, max_rssi, folder_name)
+
+def schedule_upload_jobs(upload_frequency, folder_name):
+    cron = CronTab(username="pi")
+    print(os.getcwd())
+    #job = cron.new(command="python /home/pi/upload")
+
 
 def scan(adapter, scantime, maxpower, outfolder):
     try:
