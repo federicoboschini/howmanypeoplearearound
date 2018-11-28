@@ -1,11 +1,11 @@
 {
     "scan_time": 1200,
     "max_rssi": -70,
-    "upload_frequency": "",
+    "upload_frequency": "daily",
     "bucket_name": "federico.sniffer",
     "compression_type": "gzip",
     "compress_in_memory": true,
-    "env": "prod",
+    "env": "dev",
     "customer": "bmw",
     "id": "1234-5678"
 }
